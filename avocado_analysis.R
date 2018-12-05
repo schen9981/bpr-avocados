@@ -4,6 +4,7 @@ library(lubridate)
 library(ggseas)
 library(plyr)
 library(dplyr)
+library(ggmap)
 library(tidyr)
 
 # read in data
@@ -58,8 +59,48 @@ cbind(us_conven_ts, us_organic_ts) %>%
   gather("series", "price", c(us_conven_ts.AveragePrice, us_organic_ts.AveragePrice)) %>% 
   ggseas::ggsdc(aes(x, price, colour = series), method = "decompose") +
   geom_line() +
-  labs(x = "time", y ="price", title = "Decomposition of Avocado Prices")
+  labs(x = "Time", y ="Average Price", title = "Decomposition of Avocado Prices", colour ="Avocado Type") +
+  scale_color_manual(labels = c("Conventional", "Organic"), values = c("royalblue3", "springgreen3"))
 
-# model the linear relationship
+# clean up cities data
+regions[3] <- "Baltimore"
+regions[6] <- "Buffalo"
+regions[10] <- "Cincinnati"
+regions[12] <- "Dallas"
+regions[15] <- "`Grand Rapids`"
+regions[16] <- "`Great Lakes`"
+regions[17] <- "Harrisburg"
+regions[18] <- "Hartford"
+regions[22] <- "`Las Vegas`"
+regions[23] <- "`Los Angeles`"
+regions[25] <- "Miami"
+regions[28] <- "`New Orleans`"
+regions[29] <- "`New York`"
+regions[34] <- "Phoenix"
+regions[38] <- "Raleigh"
+regions[39] <- "Richmond"
+regions[42] <- "`San Diego`"
+regions[43] <- "`San Francisco`"
+regions[45] <- "`South Carolina`"
+regions[49] <- "`St Louis`"
+regions <- regions[c(-26, -30, -31, -46, -47, -52, -53, -54)]
+regions <- regions[-43]
 
 
+# plot cities included in analysis in US map
+mp <- NULL
+mapUS <- borders("state", colour="white", fill="gray59")
+mp <- ggplot() + mapUS 
+
+#Now Layer the cities on top
+for (i in 1:length(regions)) {
+  coord <- geocode(regions[i], source = "dsk")
+  mp <- mp + geom_point(aes_string(x = coord$lon, y = coord$lat), color = "blue3", size = 2)
+}
+mp <- mp + theme(axis.title.x = element_blank(), 
+            axis.text.x = element_blank(),
+            axis.ticks.x = element_blank(),
+            axis.title.y = element_blank(), 
+            axis.text.y = element_blank(),
+            axis.ticks.y = element_blank())
+mp <- mp + labs(title = "Map of Data Collection Locations for Avocados")
